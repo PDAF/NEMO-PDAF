@@ -1,0 +1,113 @@
+&tasks_nml
+   tasks = 10
+   screen = 3
+/
+&pdaf_nml
+   screen = 2
+   verbose_io = 2
+   filtertype = 5
+   subtype = 0
+   type_forget = 0
+   forget = 1.0
+   locweight = 2
+   delt_obs = 496
+   sgldbl_io = 'dbl'
+   save_var_time = 'none'
+   save_state = .true.
+/
+&init_nml
+   ens_restart = .false.  ! .true. for ensemble restarting / overwrites type_ens_init and type_central_state
+   type_ens_init = 3
+   type_central_state = 0
+   ensscale = 1.0
+
+   path_inistate = './' 
+   path_ens = './'
+   file_ens = 'cov.nc'
+   coupling_nemo = 'odir'
+/
+&state_vector
+   sv_temp = .true.
+   sv_salt = .true.
+   sv_ssh  = .true.
+   sv_uvel = .true.
+   sv_vvel = .true.
+/
+&sfields_nml
+   sfields(1)%ndims = 2
+   sfields(1)%variable = 'zos'
+   sfields(1)%name_incr = 'bckineta'
+   sfields(1)%name_rest_n = 'sshn'
+   sfields(1)%name_rest_b = 'sshb'
+   sfields(1)%rst_file = 'restart_in.nc'
+   sfields(1)%unit = 'm'
+   ! sfields(1)%file = 'zos.dat'
+   sfields(1)%file = 'ORCA2_5d_00010101_00011231_grid_T.nc'
+   sfields(1)%file_state = 'ORCA2_5d_00010101_00011231_grid_T.nc'
+
+   sfields(2)%ndims = 3
+   sfields(2)%variable = 'thetao'
+   sfields(2)%name_incr = 'bckint'
+   sfields(2)%name_rest_n = 'tn'
+   sfields(2)%name_rest_b = 'tb'
+   sfields(2)%rst_file = 'restart_in.nc'
+   sfields(2)%unit = 'degC'
+   ! sfields(2)%file = 'thetao.dat'
+   sfields(2)%file = 'ORCA2_5d_00010101_00011231_grid_T.nc'
+   sfields(2)%file_state = 'ORCA2_5d_00010101_00011231_grid_T.nc'
+
+   sfields(3)%ndims = 3
+   sfields(3)%variable = 'so'
+   sfields(3)%name_incr = 'bckins'
+   sfields(3)%name_rest_n = 'sn'
+   sfields(3)%name_rest_b = 'sb'
+   sfields(3)%rst_file = 'restart_in.nc'
+   sfields(3)%unit = '1e-3'
+   sfields(3)%limit = 1             ! Apply lower limit
+   sfields(3)%min_limit = 0.0   ! Salinity is never negative
+   ! sfields(3)%file = 'so.dat'
+   sfields(3)%file = 'ORCA2_5d_00010101_00011231_grid_T.nc'
+   sfields(3)%file_state = 'ORCA2_5d_00010101_00011231_grid_T.nc'
+
+   sfields(4)%ndims = 3
+   sfields(4)%variable = 'uo'
+   sfields(4)%name_incr = 'bckinu'
+   sfields(4)%name_rest_n = 'un'
+   sfields(4)%name_rest_b = 'ub'
+   sfields(4)%rst_file = 'restart_in.nc'
+   sfields(4)%unit = 'm/s'
+   ! sfields(4)%file = 'uo.dat'
+   sfields(4)%file = 'ORCA2_5d_00010101_00011231_grid_U.nc'
+   sfields(4)%file_state = 'ORCA2_5d_00010101_00011231_grid_U.nc'
+
+   sfields(5)%ndims = 3
+   sfields(5)%variable = 'vo'
+   sfields(5)%name_incr = 'bckinv'
+   sfields(5)%name_rest_n = 'vn'
+   sfields(5)%name_rest_b = 'vb'
+   sfields(5)%rst_file = 'restart_in.nc'
+   sfields(5)%unit = 'm/s'
+   ! sfields(5)%file = 'vo.dat'
+   sfields(5)%file = 'ORCA2_5d_00010101_00011231_grid_V.nc'
+   sfields(5)%file_state = 'ORCA2_5d_00010101_00011231_grid_V.nc'
+/
+
+&obs_ssh_mgrid_nml
+! Settings for SSH MGRID
+  assim_ssh_mgrid = .true.
+  varname_ssh_mgrid = 'zos'
+/
+
+&obs_sst_cmems_nml
+! Settings for CMEMS SST
+!  assim_sst_cmems = .true.
+  path_sst_cmems = '.'
+  !file_sst_cmems = 'sst_multi_201801.nc'
+  file_sst_cmems = 'sst_rep_L4_201501.nc'
+  mode_sst_cmems = 0     ! 0 for linear interpolation onto observation grid
+  varname_sst_cmems = 'analysed_sst'
+  rms_obs_sst_cmems = 0.08
+  lradius_sst_cmems = 20000.0 
+  sradius_sst_cmems = 20000.0 
+/
+

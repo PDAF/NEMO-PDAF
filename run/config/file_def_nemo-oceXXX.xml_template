@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+
+<!--
+============================================================================================================
+=                                           output files definition                                        =
+=                                            Define your own filesfor ocean dynamics context               =
+=                                         put the variables you want...                                    =
+============================================================================================================
+-->
+    <file_definition type="one_file" name="_DIMENS3__@expname@_@freq@" sync_freq="1d" split_freq="1d" min_digits="4">
+
+      <file_group id="1d" output_freq="1d"  output_level="10" enabled=".TRUE."  >
+
+        <file id="file1_DIMENS2_" name_suffix="_SURF_grid_T" description="ocean T grid variables" compression_level="0" enabled="_FILE1flag_">
+            <!-- NOTE: 'field_ref' is nemo field name, 'name' is used in the nc file and can be chosen freely -->
+            <field field_ref="ssh"          name="SSH_inst"                                               operation="instant" grid_ref="grid_T_2D" />
+            <field field_ref="sst"          name="SST"                                                    operation="instant" grid_ref="grid_T_2D" />
+            <field field_ref="sss"          name="SSS"                                                    operation="instant" grid_ref="grid_T_2D" />
+            <field field_ref="icethic"      name="icethic"                                                operation="instant" grid_ref="grid_T_2D" />
+            <field field_ref="iceconc"      name="icefrac"                                                operation="instant" grid_ref="grid_T_2D" />
+ 	    <field field_ref="snwthic"      name="snow_thickness" long_name="Snow thickness per area"     operation="instant"/>
+	    <field field_ref="snwthic_cat"  name="snow_thick_cat" long_name="Snow thickness per category" operation="instant"/>
+        </file>
+
+      </file_group>
+
+      <file_group id="1d" output_freq="1d"  output_level="10" enabled=".TRUE.">
+
+        <file id="file2_DIMENS2_" name_suffix="_grid_T" description="ocean T grid variables" compression_level="0" enabled="_FILE2flag_">
+          <field field_ref="toce"         name="votemper"       long_name="potential_temperature"       operation="instant"/>
+          <field field_ref="soce"         name="vosaline"       long_name="salinity"                    operation="instant"/>
+        </file>
+
+      </file_group>
+      
+      <file_group id="1d" output_freq="1d"  output_level="10" enabled=".TRUE.">
+      
+        <file id="file3_DIMENS2_" name_suffix="_grid_U" description="ocean U grid variables" compression_level="0" enabled="_FILE3flag_">
+          <field field_ref="uoce"         name="uos"          long_name="u-velocity component"       operation="instant"/> 
+        </file>
+
+      </file_group>
+
+      <file_group id="1d" output_freq="1d"  output_level="10" enabled=".TRUE.">
+
+        <file id="file4_DIMENS2_" name_suffix="_grid_V" description="ocean V grid variables" compression_level="0" enabled="_FILE4flag_">
+          <field field_ref="voce"         name="vos"          long_name="v-velocity component"       operation="instant"/>  
+        </file>
+
+      </file_group>
+
+      <file_group id="1d" output_freq="1d"  output_level="10" enabled=".TRUE.">
+
+        <file id="file5_DIMENS2_" name_suffix="_grid_W" description="ocean W grid variables" compression_level="0" enabled="_FILE5flag_">
+          <field field_ref="woce"         name="wos"          long_name="w-velocity component"       operation="instant"/>
+        </file>
+
+      </file_group>
+
+    </file_definition>

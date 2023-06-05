@@ -1,0 +1,81 @@
+&tasks_nml
+  tasks=_DIMENS_
+  screen=0
+/
+
+&pdaf_nml
+  screen=2
+  verbose_io=1
+  delt_obs=160 !960
+  forget=0.9
+  locweight=2
+  type_trans=1
+  save_var = 'fcst'
+  save_state = 'both'
+/
+
+&update_nml
+  update_temp = .true.
+  update_salt = .true.
+  update_ssh = .true.
+  update_vel = .true.
+! Settings for NEMO's ASMINC module
+  do_asmiau = .true.
+  steps_asmiau = 10
+  shape_asmiau = 0
+  iter_divdmp = 50
+/
+
+&init_nml
+  ens_restart = _RESTART_  !.false.      ! Ensemble restarting
+  type_ens_init = 3          ! 3: covariance matrix (if ens_restart=.false.)
+  type_central_state = 2
+  ensscale = 1.0
+  file_covar = '/scratch/usr/hzfblner/SEAMLESS/covar/covar_N60.nc'
+  path_ens = '/scratch/usr/hzfblner/SEAMLESS/out_free'
+  path_inistate = '/scratch/usr/hzfblner/SEAMLESS/out_free'
+/
+
+&state_vector
+  screen=1
+  n_fields_covar=5  ! Number of fileds in covar file (=0 to read full state)
+  sv_ssh=.true.
+  sv_temp=.true.
+  sv_salt=.true.
+  sv_uvel=.true.
+  sv_vvel=.true.
+/
+
+&sfields_nml
+  sfields(1)%variable = 'SSH_inst'
+  sfields(2)%variable = 'votemper'
+  sfields(3)%variable = 'vosaline'
+  sfields(4)%variable = 'uos'
+  sfields(5)%variable = 'vos'
+  sfields(1)%file = 'files_surf_T.txt'
+  sfields(2)%file = 'files_T.txt'
+  sfields(3)%file = 'files_T.txt'
+  sfields(4)%file = 'files_U.txt'
+  sfields(5)%file = 'files_V.txt'
+  sfields(1)%ensscale = 0.0
+/
+
+! OBSERVATIONS
+
+&obs_ssh_mgrid_nml
+  assim_ssh_mgrid = .false.
+  varname_ssh_mgrid = 'SSH_inst'
+/
+
+&obs_sst_cmems_nml
+! Settings for CMEMS SST
+  assim_sst_cmems = .true.
+  path_sst_cmems = '/scratch/usr/hzfblner/SEAMLESS/observations/SST_2015'
+  file_sst_cmems = 'sst_REP_L4_2015_MONTH_.nc'
+  varname_sst_cmems = 'analysed_sst'
+  mode_sst_cmems = 0     ! 0 for linear interpolation onto observation grid
+  dist_sst_cmems = 'geo' ! 'geo' for geographic in km; 'gp' for grid point distance
+  rms_obs_sst_cmems = 0.8
+  lradius_sst_cmems = 15000.0 
+  sradius_sst_cmems = 15000.0
+/

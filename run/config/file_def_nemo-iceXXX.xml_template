@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+    <!-- $id$ -->
+
+ <!--
+============================================================================================================
+=                                           output files definition                                        =
+=                                      Define your own files for sea ice                                   =
+=                                         put the variables you want...                                    =
+============================================================================================================
+ -->
+
+ <file_definition type="one_file" name="_DIMENS3__@expname@_@freq@" sync_freq="1d" split_freq="1d" min_digits="4">
+   <file_group id="1h" output_freq="1h"  output_level="10" enabled=".TRUE."  >
+        <file id="file6_DIMENS2_" name_suffix="_ice_grid_T" description="ice variables" compression_level="0" enabled="_FILE6flag_" >
+       <field field_ref="icethic"          name="icethic"  operation="average" grid_ref="grid_T_2D" />
+       <field field_ref="iceconc"          name="icefrac"  operation="average" grid_ref="grid_T_2D" />
+       <!-- category fields -->
+     </file>
+   </file_group>
+ </file_definition>
+
+

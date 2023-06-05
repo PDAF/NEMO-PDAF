@@ -1,0 +1,127 @@
+&tasks_nml
+  tasks=_DIMENS_
+  screen=0
+/
+
+&pdaf_nml
+  screen=2
+  verbose_io=2
+  delt_obs=160
+  forget=0.9
+  locweight=2
+  type_trans=1
+  save_var = 'both'
+  save_state = 'both'
+/
+
+&update_nml
+  update_temp = .true.
+  update_salt = .true.
+  update_ssh = .true.
+  update_vel = .true.
+! Settings for NEMO's ASMINC module
+  do_asmiau = .true.
+  steps_asmiau = 10
+  shape_asmiau = 0
+!  iter_divdmp = 50
+/
+
+&init_nml
+  ens_restart = _RESTART_    ! Ensemble restarting
+  type_ens_init = 0          ! 3: covariance matrix (if ens_restart=.false.)
+  type_central_state = 0
+  ensscale = 1.0
+  file_covar = '/scratch/usr/hzfblner/SEAMLESS/covar/covar_N60.nc'
+  path_ens = '/scratch/usr/hbknerge/SEAMLESS/run/ORCA2_PISCES'
+  path_inistate = '/scratch/usr/hzfblner/SEAMLESS/out_free'
+/
+
+&state_vector
+  screen=1
+  n_fields_covar=0  ! Number of fileds in covar file (=0 to read full state)
+  sv_ssh=.true.
+  sv_temp=.true.
+  sv_salt=.true.
+  sv_uvel=.true.
+  sv_vvel=.true.
+  sv_trc(1)=.true.
+  sv_trc(2)=.true.
+  sv_trc(3)=.true.
+  sv_trc(4)=.true.
+  sv_trc(5)=.true.
+  sv_trc(6)=.true.
+  sv_trc(7)=.true.
+  sv_trc(8)=.true.
+  sv_trc(9)=.true.
+  sv_trc(10)=.true.
+  sv_trc(11)=.true.
+  sv_trc(12)=.true.
+  sv_trc(13)=.true.
+  sv_trc(14)=.true.
+  sv_trc(15)=.true.
+  sv_trc(16)=.true.
+  sv_trc(17)=.true.
+  sv_trc(18)=.true.
+  sv_trc(19)=.true.
+  sv_trc(20)=.true.
+  sv_trc(21)=.true.
+  sv_trc(22)=.true.
+  sv_trc(23)=.true.
+  sv_trc(24)=.true.
+/
+
+&sfields_nml
+  sfields(1)%file = 'ORCA2_5d_00010101_00011231_grid_T.nc'
+  sfields(2)%file = 'ORCA2_5d_00010101_00011231_grid_T.nc'
+  sfields(3)%file = 'ORCA2_5d_00010101_00011231_grid_T.nc'
+  sfields(4)%file = 'ORCA2_5d_00010101_00011231_grid_U.nc'
+  sfields(5)%file = 'ORCA2_5d_00010101_00011231_grid_V.nc'
+  sfields(6)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(7)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(8)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(9)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(10)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(11)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(12)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(13)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(14)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(15)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(16)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(17)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(18)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(19)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(20)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(21)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(22)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(23)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(24)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(25)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(26)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(27)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(28)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+  sfields(29)%file = 'ORCA2_5d_00010101_00011231_ptrc_T.nc'
+/
+
+! OBSERVATIONS
+
+&obs_ssh_mgrid_nml
+  assim_ssh_mgrid = .true.
+  varname_ssh_mgrid = 'zos'
+  file_ssh_mgrid = '/scratch/usr/hbknerge/SEAMLESS/run/ORCA2_nobio/ORCA2_5d_00010101_00011231_grid_T.nc'
+  lradius_ssh_mgrid = 1000000.0
+  sradius_ssh_mgrid = 1000000.0
+  rms_ssh_mgrid = 0.05
+/
+
+&obs_sst_cmems_nml
+! Settings for regional CMEMS SST
+!  assim_sst_cmems = .true.
+  path_sst_cmems = '/scratch/usr/hzfblner/SEAMLESS/observations/SST_2015'
+  file_sst_cmems = 'sst_REP_L4_2015_MONTH_.nc'
+  varname_sst_cmems = 'analysed_sst'
+  mode_sst_cmems = 0     ! 0 for linear interpolation onto observation grid
+  dist_sst_cmems = 'geo' ! 'geo' for geographic in km; 'gp' for grid point distance
+  rms_obs_sst_cmems = 0.8
+  lradius_sst_cmems = 15000.0 
+  sradius_sst_cmems = 15000.0
+/
