@@ -35,7 +35,7 @@ module io_pdaf
   implicit none
   save
 
-  integer :: verbose_io=1   ! Set verbosity of IO routines (0,1,2,3)
+  integer :: verbose_io=0   ! Set verbosity of IO routines (0,1,2,3)
 
   ! Control of IO
   character(len=4) :: save_var='none'        ! Write variance at 'fcst', 'ana', 'both', or 'none'
@@ -586,7 +586,7 @@ end subroutine read_ens_mv_filelist
       else
          n_fields_read = n_fields_covar
          if (verbose_io>0 .and. mype==0) &
-              WRITE(*, '(a,1x,a,i)') 'NEMO-PDAF', '--- Number of fields to read', n_fields_read
+              WRITE(*, '(a,1x,a,i4)') 'NEMO-PDAF', '--- Number of fields to read', n_fields_read
       end if
 
       ! loop over all fields
@@ -758,7 +758,7 @@ end subroutine read_ens_mv_filelist
     do i = 1, n_fields
 
        if (verbose_io>1 .and. mype==0) then
-          write (*,'(a,i5,a,a,a,i10)') &
+          write (*,'(a,i5,a,1x,a,a,i10)') &
                'NEMO-PDAF', i, 'Variable: ',trim(sfields(i)%variable), ',  offset', sfields(i)%off
        end if
 

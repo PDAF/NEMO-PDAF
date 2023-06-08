@@ -1,10 +1,11 @@
+!> Module providing transformations between fields and state vector
+!!
+!! Routines to transform state vector
+!! - mapping between state vector and model field
+!! - state transformations (log, etc.)
+!! - apply limits to values to fields in state vector
+!!
 module transforms_pdaf
-
-! !DESCRIPTION:
-! Routines to transform state vector
-! - mapping between state vector and model field
-! - state transformations (log, etc.)
-! - apply limits to values to fields in state vector
 
   ! Include dimension information for model grid
   use mod_kind_pdaf
@@ -1270,7 +1271,7 @@ contains
           end do
 
           if (cnt>0 .and. verbose>0) &
-               write(*,'(a, 8x, a, i)') 'NEMO-PDAF', '--- number of affected values', cnt
+               write(*,'(a, 8x, a, i8)') 'NEMO-PDAF', '--- number of affected values', cnt
 
        elseif (dolimit == 2) then
 
@@ -1286,7 +1287,7 @@ contains
           end do
 
           if (cnt>0 .and. verbose>0) &
-               write(*,'(a, 8x, a, i)') 'NEMO-PDAF', '--- number of affected values', cnt
+               write(*,'(a, 8x, a, i8)') 'NEMO-PDAF', '--- number of affected values', cnt
 
        elseif (dolimit == 3) then
 
