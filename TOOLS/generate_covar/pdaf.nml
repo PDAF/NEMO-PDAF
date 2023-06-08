@@ -7,11 +7,11 @@
  file_dims = 'ORCA2_5d_00010101_00011231_grid_T.nc'   ! Name of file from which dimensions are read
  use_wet_state = 0      ! Type of state vector compression
  jptra = 0              ! Number of BGC tracers in state vector
+ dim_ens = 30           ! Nmuber of snapshots to read 
 /
 
 ! Settings to generate covariance matrix
 &generate_covar
- dim_ens = 30           ! Nmuber of snapshots to read 
  running_mean = 1       ! 1 = use running mean
  hwindow = 10           ! Half window size to compute running mean (2*hwindow+1 snapshots are used)
  type_ens_init = 0      ! How are snapshots read: (0) single file; (1) multiple files with 1 snapshot each

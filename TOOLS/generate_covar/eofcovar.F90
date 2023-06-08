@@ -43,7 +43,7 @@ subroutine eofcovar()
   integer :: hwindow       ! Half time window for running mean (2*irange+1)
   real    :: limit         ! lower limit for singular values
 
-  namelist /generate_covar/ dim_ens, maxtimes, do_mv, subtract_mean, limit, hwindow, &
+  namelist /generate_covar/ maxtimes, do_mv, subtract_mean, limit, hwindow, &
        type_ens_init, file_covar, path_covar, path_ens, running_mean
 
 
@@ -119,7 +119,7 @@ subroutine eofcovar()
    if (running_mean == 1) then
 
       write (*,'(1x,a,i5,a)') 'Compute running mean over', maxtimes,' snapshots'
-      write (*,'(1x,a,i)') '-- use half-window sizze', hwindow
+      write (*,'(1x,a,i5)') '-- use half-window sizze', hwindow
 
       call compute_running_mean(maxtimes, hwindow, states, meanstate, tmp_ens)
 

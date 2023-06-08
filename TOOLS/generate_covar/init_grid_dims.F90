@@ -12,6 +12,8 @@ subroutine init_grid_dims()
   use parallel_pdaf, &
        only: mype=>mype_world, npes=>npes_world, MPIerr, &
        abort_parallel
+  use assimilation_pdaf, &
+       only: dim_ens
   use nemo_pdaf, &
        only: path_dims, file_dims, tmask, jptra, &
        jpiglo, jpjglo, jpk, glamt, gphit, gdept_1d, &
@@ -52,7 +54,7 @@ subroutine init_grid_dims()
   integer :: nx, ny, nz                         ! Size of 3D grid
 
   namelist /pdaf_offline/ screen, path_dims, file_dims, varname, use_wet_state, &
-       read_decomp, file_decomp, verbose_io, jptra
+       read_decomp, file_decomp, verbose_io, jptra, dim_ens
 
 
 ! **********************
