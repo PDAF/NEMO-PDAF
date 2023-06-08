@@ -70,11 +70,11 @@ libpdaf-d.a:
 
 .F90.o :
 	$(FC) $(OPT) $(DEFS) $(CPP_DEFS) $(MPI_INC) $(NC_INC) -I$(BASEDIR)/include -c \
-	-convert big_endian -assume byterecl  $*.F90
+	$*.F90
 
 .f90.o :
 	$(FC) $(OPT) $(DEFS) $(CPP_DEFS) $(MPI_INC) $(NC_INC) -c \
-	-convert big_endian -assume byterecl $*.f90
+	$*.f90
 
 # For older compilers one might need to separate the
 # preprocessing from the compilation as defined below:
