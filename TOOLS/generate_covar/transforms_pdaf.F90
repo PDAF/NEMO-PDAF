@@ -1271,7 +1271,7 @@ contains
           end do
 
           if (cnt>0 .and. verbose>0) &
-               write(*,'(a, 8x, a, i)') 'NEMO-PDAF', '--- number of affected values', cnt
+               write(*,'(a, 8x, a, i8)') 'NEMO-PDAF', '--- number of affected values', cnt
 
        elseif (dolimit == 2) then
 
@@ -1287,7 +1287,7 @@ contains
           end do
 
           if (cnt>0 .and. verbose>0) &
-               write(*,'(a, 8x, a, i)') 'NEMO-PDAF', '--- number of affected values', cnt
+               write(*,'(a, 8x, a, i8)') 'NEMO-PDAF', '--- number of affected values', cnt
 
        elseif (dolimit == 3) then
 

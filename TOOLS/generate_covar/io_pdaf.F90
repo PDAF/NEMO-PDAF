@@ -586,7 +586,7 @@ end subroutine read_ens_mv_filelist
       else
          n_fields_read = n_fields_covar
          if (verbose_io>0 .and. mype==0) &
-              WRITE(*, '(a,1x,a,i)') 'NEMO-PDAF', '--- Number of fields to read', n_fields_read
+              WRITE(*, '(a,1x,a,i4)') 'NEMO-PDAF', '--- Number of fields to read', n_fields_read
       end if
 
       ! loop over all fields
