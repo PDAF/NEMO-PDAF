@@ -7,51 +7,51 @@
 !! The initialization of communicators for execution with PDAF is
 !! performed in `init_parallel_pdaf`.
 !! 
-MODULE parallel_pdaf
+module parallel_pdaf
 
-  USE mod_kind_pdaf
+  use mod_kind_pdaf
 
-  IMPLICIT NONE
-  SAVE
+  implicit none
+  save
 
-  INCLUDE 'mpif.h'
+  include 'mpif.h'
 
   ! Basic variables for model state integrations
-  INTEGER :: COMM_model         ! MPI communicator for model tasks
-  INTEGER :: mype_model         ! Rank in COMM_model
-  INTEGER :: npes_model         ! Size of COMM_model
+  integer :: COMM_model         ! MPI communicator for model tasks
+  integer :: mype_model         ! Rank in COMM_model
+  integer :: npes_model         ! Size of COMM_model
 
-  INTEGER :: COMM_ensemble      ! Communicator for entire ensemble
-  INTEGER :: mype_ens           ! Rank in COMM_ensemble
-  INTEGER :: npes_ens           ! Size of COMM_ensemble
+  integer :: COMM_ensemble      ! Communicator for entire ensemble
+  integer :: mype_ens           ! Rank in COMM_ensemble
+  integer :: npes_ens           ! Size of COMM_ensemble
 
   ! Additional variables for use with PDAF
-  INTEGER :: n_modeltasks = 1   ! Number of parallel model tasks
+  integer :: n_modeltasks = 1   ! Number of parallel model tasks
 
-  INTEGER :: COMM_filter        ! MPI communicator for filter PEs 
-  INTEGER :: mype_filter        ! Rank in COMM_filter
-  INTEGER :: npes_filter        ! Size of COMM_filter
+  integer :: COMM_filter        ! MPI communicator for filter PEs 
+  integer :: mype_filter        ! Rank in COMM_filter
+  integer :: npes_filter        ! Size of COMM_filter
 
-  INTEGER :: COMM_couple        ! MPI communicator for coupling filter and model
-  INTEGER :: mype_couple        ! Rank and size in COMM_couple
-  INTEGER :: npes_couple        ! Rank and size in COMM_couple
+  integer :: COMM_couple        ! MPI communicator for coupling filter and model
+  integer :: mype_couple        ! Rank and size in COMM_couple
+  integer :: npes_couple        ! Rank and size in COMM_couple
 
-  LOGICAL :: modelpe            ! Whether we are on a PE in a COMM_model
-  LOGICAL :: filterpe           ! Whether we are on a PE in a COMM_filter
-  INTEGER :: task_id            ! Index of my model task (1,...,n_modeltasks)
-  CHARACTER(len=10) :: task_str ! Task ID as string
-  INTEGER :: MPIerr             ! Error flag for MPI
-  INTEGER :: MPIstatus(MPI_STATUS_SIZE)       ! Status array for MPI
-  INTEGER, ALLOCATABLE :: local_npes_model(:) ! # PEs per ensemble
+  logical :: modelpe            ! Whether we are on a PE in a COMM_model
+  logical :: filterpe           ! Whether we are on a PE in a COMM_filter
+  integer :: task_id            ! Index of my model task (1,...,n_modeltasks)
+  character(len=10) :: task_str ! Task ID as string
+  integer :: MPIerr             ! Error flag for MPI
+  integer :: MPIstatus(MPI_STATUS_SIZE)       ! Status array for MPI
+  integer, allocatable :: local_npes_model(:) ! # PEs per ensemble
 
-CONTAINS
+contains
 
    !> Terminate the MPI execution environment.
-   SUBROUTINE abort_parallel()
+   subroutine abort_parallel()
 
-      CALL MPI_Abort(MPI_COMM_WORLD, 1, MPIerr)
+      call MPI_Abort(MPI_COMM_WORLD, 1, MPIerr)
 
-   END SUBROUTINE abort_parallel
+   end subroutine abort_parallel
 
    !> Split the MPI communicator initialised by XIOS into MODEL,
    !!
@@ -64,40 +64,40 @@ CONTAINS
    !!  - Calls:  `MPI_Comm_size`, `MPI_Comm_rank`
    !! `MPI_Comm_split`, `MPI_Barrier`
    !!
-   SUBROUTINE init_parallel_pdaf(mpi_comm)
+   subroutine init_parallel_pdaf(mpi_comm)
 
      use in_out_manager, only: cxios_context
      use timer, only: timeit
 
       !> Communicator after XIOS splitting
-      INTEGER, INTENT(inout) :: mpi_comm
+      integer, intent(inout) :: mpi_comm
 
       !> Counters
-      INTEGER :: i, j
+      integer :: i, j
       !> Index of PE
-      INTEGER :: pe_index
+      integer :: pe_index
       !> Variables for communicator-splitting
-      INTEGER :: my_color, color_couple
+      integer :: my_color, color_couple
       !> Number of model tasks
-      INTEGER :: tasks
+      integer :: tasks
       !> namelist file
-      CHARACTER(lc) :: nmlfile
+      character(lc) :: nmlfile
 
-      INTEGER :: screen=1
+      integer :: screen=1
 
       call timeit(5,'ini')
       call timeit(5,'new')
       call timeit(1,'new')
 
       ! Number of ensemble members, supplied by PDAF namelist
-      NAMELIST /tasks_nml/ tasks, screen
+      namelist /tasks_nml/ tasks, screen
 
       ! Read namelist for number of model tasks
       nmlfile = 'namelist_cfg.pdaf'
 
-      OPEN (20, file=nmlfile)
-      READ (20, NML=tasks_nml)
-      CLOSE (20)
+      open (20, file=nmlfile)
+      read (20, NML=tasks_nml)
+      close (20)
 
       n_modeltasks = tasks
 
@@ -106,73 +106,73 @@ CONTAINS
       ! *** only used to generate model communicators ***
 
       COMM_ensemble = mpi_comm
-      CALL MPI_Comm_Size(COMM_ensemble, npes_ens, MPIerr)
-      CALL MPI_Comm_Rank(COMM_ensemble, mype_ens, MPIerr)
+      call MPI_Comm_Size(COMM_ensemble, npes_ens, MPIerr)
+      call MPI_Comm_Rank(COMM_ensemble, mype_ens, MPIerr)
 
       ! Initialize communicators for ensemble evaluations
-      IF (mype_ens == 0) THEN
-         WRITE (*, '(/a, 2x, a)') 'PDAF', 'Initialize communicators for assimilation with PDAF'
-      END IF
+      if (mype_ens == 0) then
+         write (*, '(/a, 2x, a)') 'PDAF', 'Initialize communicators for assimilation with PDAF'
+      end if
 
       ! Store # PEs per ensemble member. Used for info on PE 0 and for
       ! generation of model communicators on other PEs
-      ALLOCATE (local_npes_model(n_modeltasks))
-      local_npes_model = FLOOR(REAL(npes_ens)/REAL(n_modeltasks))
+      allocate (local_npes_model(n_modeltasks))
+      local_npes_model = floor(real(npes_ens)/real(n_modeltasks))
 
-      DO i = 1, (npes_ens - n_modeltasks*local_npes_model(1))
+      do i = 1, (npes_ens - n_modeltasks*local_npes_model(1))
          local_npes_model(i) = local_npes_model(i) + 1
-      END DO
+      end do
 
       ! ***              COMM_MODEL               ***
       ! *** Generate communicators for model runs ***
 
       pe_index = 0
-      doens1: DO i = 1, n_modeltasks
-         DO j = 1, local_npes_model(i)
-            IF (mype_ens == pe_index) THEN
+      doens1: do i = 1, n_modeltasks
+         do j = 1, local_npes_model(i)
+            if (mype_ens == pe_index) then
                task_id = i
-               EXIT doens1
-            END IF
+               exit doens1
+            end if
             pe_index = pe_index + 1
-         END DO
-      END DO doens1
+         end do
+      end do doens1
 
-      CALL MPI_Comm_split(COMM_ensemble, task_id, mype_ens, &
+      call MPI_Comm_split(COMM_ensemble, task_id, mype_ens, &
                           COMM_model, MPIerr)
 
       ! Re-initialize PE information according to model communicator
-      CALL MPI_Comm_Size(COMM_model, npes_model, MPIerr)
-      CALL MPI_Comm_Rank(COMM_model, mype_model, MPIerr)
+      call MPI_Comm_Size(COMM_model, npes_model, MPIerr)
+      call MPI_Comm_Rank(COMM_model, mype_model, MPIerr)
 
-      IF (screen > 1) then
-         WRITE (*, *) 'PDAF-MODEL: mype(w)= ', mype_ens, '; model task: ', task_id, &
+      if (screen > 1) then
+         write (*, *) 'PDAF-MODEL: mype(w)= ', mype_ens, '; model task: ', task_id, &
             '; mype(m)= ', mype_model, '; npes(m)= ', npes_model
-      END IF
+      end if
 
       ! Init flag FILTERPE (all PEs of model task 1)
-      IF (task_id == 1) THEN
-         filterpe = .TRUE.
-      ELSE
-         filterpe = .FALSE.
-      END IF
+      if (task_id == 1) then
+         filterpe = .true.
+      else
+         filterpe = .false.
+      end if
 
       ! ***         COMM_FILTER                 ***
       ! *** Generate communicator for filter    ***
 
-      IF (filterpe) THEN
+      if (filterpe) then
          my_color = task_id
-      ELSE
+      else
          my_color = MPI_UNDEFINED
-      END IF
+      end if
 
-      CALL MPI_Comm_split(COMM_ensemble, my_color, mype_ens, &
+      call MPI_Comm_split(COMM_ensemble, my_color, mype_ens, &
                           COMM_filter, MPIerr)
 
       ! Initialize PE information according to filter communicator
-      IF (filterpe) THEN
-         CALL MPI_Comm_Size(COMM_filter, npes_filter, MPIerr)
-         CALL MPI_Comm_Rank(COMM_filter, mype_filter, MPIerr)
-      END IF
+      if (filterpe) then
+         call MPI_Comm_Size(COMM_filter, npes_filter, MPIerr)
+         call MPI_Comm_Rank(COMM_filter, mype_filter, MPIerr)
+      end if
 
       ! ***              COMM_COUPLE                 ***
       ! *** Generate communicators for communication ***
@@ -180,36 +180,36 @@ CONTAINS
 
       color_couple = mype_model + 1
 
-      CALL MPI_Comm_split(COMM_ensemble, color_couple, mype_ens, &
+      call MPI_Comm_split(COMM_ensemble, color_couple, mype_ens, &
                           COMM_couple, MPIerr)
 
       ! Initialize PE information according to coupling communicator
-      CALL MPI_Comm_Size(COMM_couple, npes_couple, MPIerr)
-      CALL MPI_Comm_Rank(COMM_couple, mype_couple, MPIerr)
+      call MPI_Comm_Size(COMM_couple, npes_couple, MPIerr)
+      call MPI_Comm_Rank(COMM_couple, mype_couple, MPIerr)
 
-      IF (screen > 0) THEN
-         IF (mype_ens == 0) THEN
-            WRITE (*, '(/18x, a)') 'PE configuration:'
-            WRITE (*, '(a, 2x, a6, a9, a10, a14, a13, /a, 2x, a5, a9, a7, a7, a7, a7, a7, /a, 2x, a)') &
+      if (screen > 0) then
+         if (mype_ens == 0) then
+            write (*, '(/18x, a)') 'PE configuration:'
+            write (*, '(a, 2x, a6, a9, a10, a14, a13, /a, 2x, a5, a9, a7, a7, a7, a7, a7, /a, 2x, a)') &
                'Pconf', 'world', 'filter', 'model', 'couple', 'filterPE', &
                'Pconf', 'rank', 'rank', 'task', 'rank', 'task', 'rank', 'T/F', &
                'Pconf', '----------------------------------------------------------'
-         END IF
-         CALL MPI_Barrier(COMM_ensemble, MPIerr)
-         IF (task_id == 1) THEN
-            WRITE (*, '(a, 2x, i4, 4x, i4, 4x, i3, 4x, i3, 4x, i3, 4x, i3, 5x, l3)') &
+         end if
+         call MPI_Barrier(COMM_ensemble, MPIerr)
+         if (task_id == 1) then
+            write (*, '(a, 2x, i4, 4x, i4, 4x, i3, 4x, i3, 4x, i3, 4x, i3, 5x, l3)') &
                'Pconf', mype_ens, mype_filter, task_id, mype_model, color_couple, &
                mype_couple, filterpe
-         END IF
-         IF (task_id > 1) THEN
-            WRITE (*, '(a, 2x, i4, 12x, i3, 4x, i3, 4x, i3, 4x, i3, 5x, l3)') &
+         end if
+         if (task_id > 1) then
+            write (*, '(a, 2x, i4, 12x, i3, 4x, i3, 4x, i3, 4x, i3, 5x, l3)') &
                'Pconf', mype_ens, task_id, mype_model, color_couple, mype_couple, filterpe
-         END IF
-         CALL MPI_Barrier(COMM_ensemble, MPIerr)
+         end if
+         call MPI_Barrier(COMM_ensemble, MPIerr)
 
-         IF (mype_ens == 0) WRITE (*, '(/a)') ''
+         if (mype_ens == 0) write (*, '(/a)') ''
 
-      END IF
+      end if
 
       ! ****************************************************
       ! *** Re-initialize model equivalent to COMM_model ***
@@ -219,12 +219,12 @@ CONTAINS
 
 
       ! Adapt XIOS contexts for ensemble
-      WRITE(task_str,'(I3.3)') task_id
-      cxios_context = TRIM(cxios_context)//'_'//TRIM(task_str)
+      write(task_str,'(I3.3)') task_id
+      cxios_context = trim(cxios_context)//'_'//trim(task_str)
 
       call timeit(1,'old')
       call timeit(2,'new')
 
-   END SUBROUTINE init_parallel_pdaf
+   end subroutine init_parallel_pdaf
 
-END MODULE parallel_pdaf
+end module parallel_pdaf
