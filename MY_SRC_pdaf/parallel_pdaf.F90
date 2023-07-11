@@ -33,8 +33,11 @@ module parallel_pdaf
   integer :: npes_filter        ! Size of COMM_filter
 
   integer :: COMM_couple        ! MPI communicator for coupling filter and model
-  integer :: mype_couple        ! Rank and size in COMM_couple
-  integer :: npes_couple        ! Rank and size in COMM_couple
+  integer :: mype_couple        ! Rank in COMM_couple
+  integer :: npes_couple        ! Size in COMM_couple
+
+  integer :: mype_world         ! Rank in MPI_COMM_WORLD
+  integer :: npes_world         ! Size in MPI_COMM_WORLD
 
   logical :: modelpe            ! Whether we are on a PE in a COMM_model
   logical :: filterpe           ! Whether we are on a PE in a COMM_filter
@@ -46,60 +49,51 @@ module parallel_pdaf
 
 contains
 
-   !> Terminate the MPI execution environment.
-   subroutine abort_parallel()
-
-      call MPI_Abort(MPI_COMM_WORLD, 1, MPIerr)
-
-   end subroutine abort_parallel
-
-   !> Split the MPI communicator initialised by XIOS into MODEL,
-   !!
-   !! FILTER and COUPLE communicators, return MODEL communicator.
-   !!
-   !! **Calling Sequence**
-   !!
-   !!  - Called from `lib_mpp.F90`
-   !!
-   !!  - Calls:  `MPI_Comm_size`, `MPI_Comm_rank`
-   !! `MPI_Comm_split`, `MPI_Barrier`
-   !!
+!-------------------------------------------------------------------------------
+!> Initialize MPI communicators for PDAF
+!!
+!! Split the MPI communicator initialised by XIOS into MODEL,
+!! FILTER and COUPLE communicators, return MODEL communicator.
+!!
    subroutine init_parallel_pdaf(mpi_comm)
 
-     use in_out_manager, only: cxios_context
-     use timer, only: timeit
+#ifndef PDAF_OFFLINE
+      use in_out_manager, only: cxios_context
+#endif
+      use timer, only: timeit
 
       !> Communicator after XIOS splitting
       integer, intent(inout) :: mpi_comm
 
-      !> Counters
-      integer :: i, j
-      !> Index of PE
-      integer :: pe_index
-      !> Variables for communicator-splitting
-      integer :: my_color, color_couple
-      !> Number of model tasks
-      integer :: tasks
-      !> namelist file
-      character(lc) :: nmlfile
+      integer :: i, j                   !> Counters
+      integer :: pe_index               !> Index of PE
+      integer :: my_color, color_couple !> Variables for communicator-splitting
+      integer :: dim_ens                !> Ensemble size / Number of model tasks
+      integer :: tasks                  !> Number of taks for communicator splitting
+      character(lc) :: nmlfile          !> Namelist file
+      integer :: screen=1               !> Verbosity flag
 
-      integer :: screen=1
+      ! Number of ensemble members, supplied by PDAF namelist
+      namelist /ensemble_nml/ dim_ens, screen
 
       call timeit(5,'ini')
       call timeit(5,'new')
       call timeit(1,'new')
 
-      ! Number of ensemble members, supplied by PDAF namelist
-      namelist /tasks_nml/ tasks, screen
-
       ! Read namelist for number of model tasks
       nmlfile = 'namelist_cfg.pdaf'
 
       open (20, file=nmlfile)
-      read (20, NML=tasks_nml)
+      read (20, NML=ensemble_nml)
       close (20)
 
-      n_modeltasks = tasks
+      ! Online in case of online mode: dim_ens = number of parallel model tasks
+      n_modeltasks = dim_ens
+      tasks = dim_ens
+#ifdef PDAF_OFFLINE
+      ! offline mode always has only one model task
+      tasks = 1
+#endif
 
       ! ***              COMM_ENSEMBLE                ***
       ! *** Generate communicator for ensemble runs   ***
@@ -116,10 +110,10 @@ contains
 
       ! Store # PEs per ensemble member. Used for info on PE 0 and for
       ! generation of model communicators on other PEs
-      allocate (local_npes_model(n_modeltasks))
-      local_npes_model = floor(real(npes_ens)/real(n_modeltasks))
+      allocate (local_npes_model(tasks))
+      local_npes_model = floor(real(npes_ens)/real(tasks))
 
-      do i = 1, (npes_ens - n_modeltasks*local_npes_model(1))
+      do i = 1, (npes_ens - tasks*local_npes_model(1))
          local_npes_model(i) = local_npes_model(i) + 1
       end do
 
@@ -127,7 +121,7 @@ contains
       ! *** Generate communicators for model runs ***
 
       pe_index = 0
-      doens1: do i = 1, n_modeltasks
+      doens1: do i = 1, tasks
          do j = 1, local_npes_model(i)
             if (mype_ens == pe_index) then
                task_id = i
@@ -218,13 +212,57 @@ contains
       mpi_comm = COMM_model
 
 
+#ifndef PDAF_OFFLINE
       ! Adapt XIOS contexts for ensemble
       write(task_str,'(I3.3)') task_id
       cxios_context = trim(cxios_context)//'_'//trim(task_str)
+#endif
 
       call timeit(1,'old')
       call timeit(2,'new')
 
    end subroutine init_parallel_pdaf
+
+!-------------------------------------------------------------------------------
+!> Initialize the MPI execution environment.
+!!
+  subroutine init_parallel()
+
+    implicit none
+
+    integer :: i
+  
+    call MPI_INIT(i);
+    call MPI_Comm_Size(MPI_COMM_WORLD,npes_world,i)
+    call MPI_Comm_Rank(MPI_COMM_WORLD,mype_world,i)
+
+    ! Initialize model communicator, its size and the process rank
+    ! Here the same as for MPI_COMM_WORLD
+    comm_model = MPI_COMM_WORLD
+    npes_model = npes_world
+    mype_model = mype_world
+   
+  end subroutine init_parallel
+
+!-------------------------------------------------------------------------------
+!> Finalize the MPI execution environment.
+!!
+  subroutine finalize_parallel()
+
+    implicit none
+    
+    call  MPI_Barrier(MPI_COMM_WORLD,MPIerr)
+    call  MPI_Finalize(MPIerr)
+
+  end subroutine finalize_parallel
+
+!-------------------------------------------------------------------------------
+!> Terminate the MPI execution environment.
+!!
+  subroutine abort_parallel()
+
+    call MPI_Abort(MPI_COMM_WORLD, 1, MPIerr)
+
+  end subroutine abort_parallel
 
 end module parallel_pdaf

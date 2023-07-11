@@ -1,6 +1,6 @@
 !> Initialize PDAF
 !!
-!! This modules contains the initialization routine for PDAF
+!! This module contains the initialization routine for PDAF
 !! `init_pdaf`. Here the ensemble is initialized and distributed
 !! and the statevector and state variable information are computed.
 !! 
@@ -25,34 +25,11 @@ contains
   !! such that the internal initialization of PDAF is performed.
   !! The initialization is used to set-up local domain and filter options
   !! such as the filter type, inflation, and localization radius.
+  !!
   !! This variant is for the online mode of PDAF.
-  !!
-  !! The ensemble is initialised in `init_ens_pdaf`, and is then
-  !! distributed to the model in `distribute_state_pdaf`. The arrays
-  !! for the incremental analysis update (IAU) are initialised in
-  !! `asm_inc_init_pdaf`.
-  !!
-  !! The NEMO grid information, e.g. on wet surface points is 
-  !! initialized in `set_nemo_grid`.
-  !!
-  !! The statevector dimension, and the offsets and dimensions of the
-  !! statevector variables are calculated in `setup_statevector`.
   !!
   !! Much of the initialisation is read from a PDAF-specific namelist.
   !! This is performed in `read_config_pdaf`.
-  !!
-  !! **Calling Sequence**
-  !!
-  !! - Called from: `nemogcm.F90`
-  !!
-  !! - Calls: `setup_state`
-  !!          `set_nemo_grid`
-  !!          `read_config_pdaf`
-  !!          `init_pdaf_info`
-  !!          `PDAF_set_comm_pdaf`
-  !!          `PDAF_init`
-  !!          `asm_inc_init_pdaf`
-  !!          `PDAF_get_state`
   !!
   subroutine init_pdaf()
 
@@ -61,8 +38,8 @@ contains
          only: n_modeltasks, task_id, COMM_model, COMM_filter, &
          COMM_couple, COMM_ensemble, mype_ens, filterpe, abort_parallel
     use assimilation_pdaf, &
-         only: dim_state, dim_state_p, screen, filtertype, subtype, dim_ens, &
-         incremental, type_forget, forget, rank_analysis_enkf, &
+         only: dim_state, dim_state_p, screen, step_null, filtertype, &
+         subtype, dim_ens, incremental, type_forget, forget, &
          type_trans, type_sqrt, delt_obs, locweight, type_ens_init, &
          type_central_state, type_hyb, hyb_gamma, hyb_kappa
     use asminc_pdaf, &
@@ -83,20 +60,19 @@ contains
 
     implicit none
 
-! *** Local variables
+! *** Local variables ***
     integer :: i                 ! Counter
     integer :: filter_param_i(7) ! Integer parameter array for filter
     real    :: filter_param_r(3) ! Real parameter array for filter
     integer :: status_pdaf       ! PDAF status flag
     integer :: doexit, steps     ! Not used in this implementation
     real(pwp) :: timenow         ! Not used in this implementation
-    character(len=6) :: cdaval   ! Flag whether strongly-coupled DA is done
 
-! *** External subroutines      
+! *** External subroutines ***      
     external :: init_ens_pdaf, &         ! Ensemble initialization
          next_observation_pdaf, &        ! Determine how long until next observation
          distribute_state_init_pdaf, &   ! Distribute a state vector to model fields
-         prepoststep_ens_pdaf            ! User supplied pre/poststep routine
+         prepoststep_pdaf                ! User supplied pre/poststep routine
 
 
 ! ***************************
@@ -114,9 +90,10 @@ contains
     ENDIF
 
     if (mype_ens == 0) then
-       write (*, '(/a,1x,a)') 'NEMO-PDAF', 'INITIALIZE PDAF - ONLINE MODE'
+       write (*, '(/a,1x,a)') 'NEMO-PDAF', 'INITIALIZE PDAF'
        WRITE (*, '(24x, a, F11.3, 1x, a)') 'NEMO-PDAF: initialize NEMO:', time_temp(2), 's'
     end if
+
 
 ! **********************************************************
 ! ***   CONTROL OF PDAF - used in call to PDAF_init      ***
@@ -203,11 +180,11 @@ contains
       !   (3) regulated localization of R with mean error variance
       !   (4) regulated localization of R with single-point error variance
 
-    ! Settings for CMEMS satellite SST
+    ! Settings for SSH data on model grid
     rms_ssh_mgrid     = 0.8_8     ! Observation error stddev for SSH data on mopdel grid
     lradius_ssh_mgrid = 10000.0_8 ! Radius in km for lon/lat (or in grid points)
     sradius_ssh_mgrid = lradius_ssh_mgrid  ! Support radius for 5th-order polynomial
-      ! or distance for 1/e for exponential weighting
+                                  ! or distance for 1/e for exponential weighting
 
     ! Settings for CMEMS satellite SST
     rms_obs_sst_cmems = 0.8_8     ! Observation error stddev for SST data from CMEMS
@@ -216,12 +193,12 @@ contains
                                   !  (1) super-obbing: average 4 observation values
     lradius_sst_cmems = 10000.0_8 ! Radius in km for lon/lat (or in grid points)
     sradius_sst_cmems = lradius_sst_cmems  ! Support radius for 5th-order polynomial
-      ! or distance for 1/e for exponential weighting
+                                  ! or distance for 1/e for exponential weighting
 
 
-! **********************************
-! *** Namelist and screen output ***
-! **********************************
+! ******************************************
+! *** Namelist reading and screen output ***
+! ******************************************
 
     ! Read namelist file for PDAF
     call read_config_pdaf()
@@ -235,7 +212,7 @@ contains
 ! ************************************************
 
     ! Initialize dimension information for NEMO grid
-    call set_nemo_grid()
+    call set_nemo_grid(screen)
 
     ! Setup state vector
     call setup_statevector(dim_state, dim_state_p)
@@ -246,29 +223,31 @@ contains
 ! *****************************************************
 
     call PDAF_set_comm_pdaf(COMM_ensemble)
-      
+
 
 ! *****************************************************
 ! *** Call PDAF initialization routine on all PEs.  ***
 ! *****************************************************
 
-    whichinit: if (filtertype == 2 .or. filtertype==8) then
-       ! *** EnKF/LEnKF ***
+    whichinit: if (filtertype /= 11) then
+       ! *** All filters except LKNETF/EnKF/LEnKF ***
        filter_param_i(1) = dim_state_p ! State dimension
        filter_param_i(2) = dim_ens     ! Size of ensemble
-       filter_param_i(3) = rank_analysis_enkf ! Rank of speudo-inverse in analysis
+       filter_param_i(3) = 0           ! Smoother lag (not implemented here)
        filter_param_i(4) = incremental ! Whether to perform incremental analysis
-       filter_param_i(5) = 0           ! Smoother lag (not implemented here)
+       filter_param_i(5) = type_forget ! Type of forgetting factor
+       filter_param_i(6) = type_trans  ! Type of ensemble transformation
+       filter_param_i(7) = type_sqrt   ! Type of transform square-root (SEIK-sub4/ESTKF)
        filter_param_r(1) = forget      ! Forgetting factor
 
-       call PDAF_init(filtertype, subtype, 0, &
-            filter_param_i, 6, &
+       call PDAF_init(filtertype, subtype, step_null, &
+            filter_param_i, 7, &
             filter_param_r, 2, &
             COMM_model, COMM_filter, COMM_couple, &
             task_id, n_modeltasks, filterpe, init_ens_pdaf, &
             screen, status_pdaf)
-    elseif (filtertype == 11) then
-     ! *** LKNETF ***
+    else
+       ! *** LKNETF ***
        filter_param_i(1) = dim_state_p ! State dimension
        filter_param_i(2) = dim_ens     ! Size of ensemble
        filter_param_i(3) = 0           ! Size of lag in smoother
@@ -280,26 +259,9 @@ contains
        filter_param_r(2) = hyb_gamma   ! Hybrid filter weight for state
        filter_param_r(3) = hyb_kappa   ! Normalization factor for hybrid weight 
      
-       call PDAF_init(filtertype, subtype, 0, &
+       call PDAF_init(filtertype, subtype, step_null, &
             filter_param_i, 7, &
             filter_param_r, 3, &
-            COMM_model, COMM_filter, COMM_couple, &
-            task_id, n_modeltasks, filterpe, init_ens_pdaf, &
-            screen, status_pdaf)
-    else
-       ! *** All other filters                       ***
-       filter_param_i(1) = dim_state_p ! State dimension
-       filter_param_i(2) = dim_ens     ! Size of ensemble
-       filter_param_i(3) = 0           ! Smoother lag (not implemented here)
-       filter_param_i(4) = incremental ! Whether to perform incremental analysis
-       filter_param_i(5) = type_forget ! Type of forgetting factor
-       filter_param_i(6) = type_trans  ! Type of ensemble transformation
-       filter_param_i(7) = type_sqrt   ! Type of transform square-root (SEIK-sub4/ESTKF)
-       filter_param_r(1) = forget      ! Forgetting factor
-
-       call PDAF_init(filtertype, subtype, 0, &
-            filter_param_i, 7, &
-            filter_param_r, 2, &
             COMM_model, COMM_filter, COMM_couple, &
             task_id, n_modeltasks, filterpe, init_ens_pdaf, &
             screen, status_pdaf)
@@ -319,7 +281,7 @@ contains
 ! **********************************
 
     call PDAF_get_state(steps, timenow, doexit, next_observation_pdaf, &
-         distribute_state_init_pdaf, prepoststep_ens_pdaf, status_pdaf)
+         distribute_state_init_pdaf, prepoststep_pdaf, status_pdaf)
 
 
 ! **************************************

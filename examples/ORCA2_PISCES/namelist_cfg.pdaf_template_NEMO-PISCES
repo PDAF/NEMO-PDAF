@@ -1,17 +1,23 @@
-&tasks_nml
-  tasks=_DIMENS_
+&ensemble_nml
+  dim_ens=_DIMENS_
   screen=0
 /
 
 &pdaf_nml
   screen=2
-  verbose_io=2
   delt_obs=160
   forget=0.9
   locweight=2
   type_trans=1
+/
+
+&io_nml
+  verbose_io=2
   save_var = 'both'
   save_state = 'both'
+  file_covar = '../generate_covar/covar_test.nc'
+  path_ens = '../ORCA2_nobio'
+  path_inistate = '../ORCA2_nobio'
 /
 
 &update_nml
@@ -23,17 +29,13 @@
   do_asmiau = .true.
   steps_asmiau = 10
   shape_asmiau = 0
-!  iter_divdmp = 50
 /
 
 &init_nml
   ens_restart = _RESTART_    ! Ensemble restarting
   type_ens_init = 0          ! 3: covariance matrix (if ens_restart=.false.)
-  type_central_state = 0
+  type_central_state = 2
   ensscale = 1.0
-  file_covar = '/scratch/usr/hzfblner/SEAMLESS/covar/covar_N60.nc'
-  path_ens = '/scratch/usr/hbknerge/SEAMLESS/run/ORCA2_PISCES'
-  path_inistate = '/scratch/usr/hzfblner/SEAMLESS/out_free'
 /
 
 &state_vector
@@ -107,7 +109,7 @@
 &obs_ssh_mgrid_nml
   assim_ssh_mgrid = .true.
   varname_ssh_mgrid = 'zos'
-  file_ssh_mgrid = '/scratch/usr/hbknerge/SEAMLESS/run/ORCA2_nobio/ORCA2_5d_00010101_00011231_grid_T.nc'
+  file_ssh_mgrid = '../ORCA2_nobio/ORCA2_5d_00010101_00011231_grid_T.nc'
   lradius_ssh_mgrid = 1000000.0
   sradius_ssh_mgrid = 1000000.0
   rms_ssh_mgrid = 0.05
@@ -116,7 +118,7 @@
 &obs_sst_cmems_nml
 ! Settings for regional CMEMS SST
 !  assim_sst_cmems = .true.
-  path_sst_cmems = '/scratch/usr/hzfblner/SEAMLESS/observations/SST_2015'
+  path_sst_cmems = '../observations/SST_2015'
   file_sst_cmems = 'sst_REP_L4_2015_MONTH_.nc'
   varname_sst_cmems = 'analysed_sst'
   mode_sst_cmems = 0     ! 0 for linear interpolation onto observation grid

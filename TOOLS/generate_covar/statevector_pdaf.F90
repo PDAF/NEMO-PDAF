@@ -206,7 +206,7 @@ contains
 
     ! Set total number of fields in state vector
     nfields = cnt
-    
+
   end subroutine init_id
 ! ===================================================================================
 

@@ -13,10 +13,10 @@
 #    (See directory BASEDIR/make.arch for files. PDAF_ARCH is filename without .h)
 
 # Root directory of PDAF package
-BASEDIR = ../../../../PDAF_V2.1
+BASEDIR = ../../PDAF
 
 # CPP definitions. Define 'key_top' if the state vector contains also biogeochemistry
-DEFS = -DUSE_NCPAR -DPDAF_OFFLINE  #-Dkey_top
+DEFS = -DPDAF_OFFLINE  #-Dkey_top
 
 # Include machine-specific definitions
 # For available include files see directory make.arch
@@ -34,28 +34,28 @@ EXE = PDAF_eofcovar
 
 # Modules used for the model part
 MODULES =	timer.o \
-		mod_memcount_pdaf.o
+		mod_memcount_pdaf.o \
+		mod_kind_pdaf.o
 
 # PDAF user routines identical to online analysis code
-OBJ_PDAF_USER =	mod_kind_pdaf.o \
-		parallel_pdaf.o \
-		assimilation_pdaf.o \
+OBJ_PDAF_USER =	parallel_pdaf.o \
 		nemo_pdaf.o \
 		statevector_pdaf.o \
 		transforms_pdaf.o \
-		io_pdaf.o \
+		io_pdaf.o
 
 # Routines particular for the offline code
-OBJ_MODEL =	main_offline.o \
-		init_grid_dims.o \
+OBJ_OFFLINE =	assimilation_pdaf_eofcovar.o \
+		initialize_offline.o \
+		main_eofcovar.o \
 		eofcovar.o
 
 ######################################################
 
 $(EXE) : libpdaf-d.a \
-	$(MODULES) $(OBJ_PDAF_USER) $(OBJ_MODEL) $(OBJ_MPI)
+	$(MODULES) $(OBJ_PDAF_USER) $(OBJ_OFFLINE) $(OBJ_MPI)
 	$(LD)  $(OPT_LNK) $(NC_LIB) -o $@  \
-	$(MODULES) $(OBJ_PDAF_USER) $(OBJ_MODEL) $(OBJ_MPI) \
+	$(MODULES) $(OBJ_PDAF_USER) $(OBJ_OFFLINE) $(OBJ_MPI) \
 	-L$(BASEDIR)/lib -lpdaf-d \
 	$(LINK_LIBS)
 	@echo "++++++ Done ++++++"
@@ -91,3 +91,8 @@ clean :
 cleanpdaf:
 	@echo "+++ Clean up PDAF directory"
 	cd $(BASEDIR)/src; make clean
+
+
+# Some necessary dependencies to ensure that the program compiles
+eofcovar.o: assimilation_pdaf_eofcovar.o
+io_pdaf.o: assimilation_pdaf_eofcovar.o

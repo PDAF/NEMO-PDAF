@@ -1,0 +1,9 @@
+! Namelist file for PDAF configuration
+
+&pdaf_offline
+ ! Path and file for reading model dimensions
+ path_dims = '../ORCA2_PISCES'                        ! Directory for dimensions file
+ file_dims = 'ORCA2_5d_00010101_00011231_grid_T.nc'   ! Name of file from which dimensions are read
+ use_wet_state = 0      ! Type of state vector compression
+ jptra = 0              ! Number of BGC tracers in state vector
+/

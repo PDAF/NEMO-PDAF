@@ -1,13 +1,13 @@
-!> Controlling Pre- and Post-Processing of the PDAF output
+!> Pre- and Post-Processing of the PDAF output
 !!
-!!  - For global filters (e.g. SEIK), the routine is called
+!!  - For global filters (e.g. ESTKF), the routine is called
 !! before the analysis and after the ensemble transformation.
-!!  - For local filters (e.g. LSEIK), the routine is called
+!!  - For local filters (e.g. LESTKF), the routine is called
 !! before and after the loop over all local analysis
 !! domains.
 !! 
 !! The routine provides full access to the state
-!! estimate and the state ensemble to the user.
+!! ensemble to the user.
 !! Thus, user-controlled pre- and poststep
 !! operations can be performed here. For example
 !! the forecast and the analysis states and ensemble
@@ -25,7 +25,7 @@
 !! 
 !!  - Called by: `PDAF_get_state` (as U_prepoststep) `PDAF_X_update` (as U_prepoststep)
 !! 
-subroutine prepoststep_ens_pdaf(step, dim_p, dim_ens, dim_ens_p, dim_obs_p, &
+subroutine prepoststep_pdaf(step, dim_p, dim_ens, dim_ens_p, dim_obs_p, &
      state_p, Uinv, ens_p, flag)
 
   use mpi
@@ -37,7 +37,8 @@ subroutine prepoststep_ens_pdaf(step, dim_p, dim_ens, dim_ens_p, dim_obs_p, &
   use statevector_pdaf, &
        only: n_fields, id, sfields
   use io_pdaf, &
-        only: save_state, save_var, save_ens_sngl, file_PDAF_state, file_PDAF_variance, &
+        only: save_state, save_var, save_ens_sngl, &
+        file_out_state, file_out_variance, &
         write_field_mv, write_field_sngl, ids_write
   use nemo_pdaf, &
        only: ndastp, calc_date
@@ -232,12 +233,12 @@ real :: rdate
         if (forana/='ini') then
            if (trim(save_var)=='both' .or. (trim(save_var)=='fcst' .and. forana=='for') &
                 .or. (trim(save_var)=='ana' .and. forana=='ana')) then
-              call write_field_mv(state_tmp, trim(file_PDAF_variance)//'_'//trim(ndastp_str)//'.nc', &
-                   titleVar, 1.0, nsteps, writestep_var, 0)
+              call write_field_mv(state_tmp, trim(file_out_variance)//'_'//trim(ndastp_str)//'.nc', &
+                   titleVar, rdate, nsteps, writestep_var, 0)
            end if
         else if (.not. (ens_restart)) then
-           call write_field_mv(state_tmp, trim(file_PDAF_variance)//'_'//trim(ndastp_str)//'_ini.nc', &
-                titleVar, 1.0, nsteps, writestep_var, 0)
+           call write_field_mv(state_tmp, trim(file_out_variance)//'_'//trim(ndastp_str)//'_ini.nc', &
+                titleVar, rdate, nsteps, writestep_var, 0)
         end if
         if (forana/='ini' .and. trim(save_var)=='both') writestep_var = 2
 
@@ -245,8 +246,8 @@ real :: rdate
         
         if (mype == 0) write (*,'(a,5x,a)') 'NEMO-PDAF', '--- Write variance after analysis step'
 
-        call write_field_mv(state_tmp, trim(file_PDAF_variance)//'_'//trim(ndastp_str)//'.nc', &
-             titleVar, 1.0, 2, writestep_var, 0)
+        call write_field_mv(state_tmp, trim(file_out_variance)//'_'//trim(ndastp_str)//'.nc', &
+             titleVar, rdate, 2, writestep_var, 0)
 
         writestep_var = 1
      end if
@@ -290,12 +291,12 @@ real :: rdate
      ! Write forecast and analysis into the same file
      if (forana/='ini') then
         if (writestep_state>0) then
-           call write_field_mv(state_tmp, trim(file_PDAF_state)//'_'//trim(ndastp_str)//'.nc', &
-                titleState, 1.0, nsteps, writestep_state, 1)
+           call write_field_mv(state_tmp, trim(file_out_state)//'_'//trim(ndastp_str)//'.nc', &
+                titleState, rdate, nsteps, writestep_state, 1)
         end IF
      else
-        call write_field_mv(state_tmp, trim(file_PDAF_state)//'_'//trim(ndastp_str)//'_ini.nc', &
-             titleState, 1.0, nsteps, writestep_state, 1)
+        call write_field_mv(state_tmp, trim(file_out_state)//'_'//trim(ndastp_str)//'_ini.nc', &
+             titleState, rdate, nsteps, writestep_state, 1)
      end if
   endif writestate
 
@@ -335,12 +336,12 @@ real :: rdate
               ! Write forecast and analysis into the same file
               if (forana/='ini') then
                  call write_field_sngl(state_tmp, &
-                      trim(file_PDAF_state)//'_'//trim(sfields(id_var)%variable)//'_'//trim(ndastp_str)//'_'//ensstr//'.nc', &
-                      titleState, 1.0, 2, writestep_state, 1, id_var)
+                      trim(file_out_state)//'_'//trim(sfields(id_var)%variable)//'_'//trim(ndastp_str)//'_'//ensstr//'.nc', &
+                      titleState, rdate, 2, writestep_state, 1, id_var)
               else
                  call write_field_sngl(state_tmp, &
-                      trim(file_PDAF_state)//'_'//trim(sfields(id_var)%variable)//'_'//trim(ndastp_str)//'_'//ensstr//'_ini.nc', &
-                      titleState, 1.0, 1, writestep_state, 1, id_var)
+                      trim(file_out_state)//'_'//trim(sfields(id_var)%variable)//'_'//trim(ndastp_str)//'_'//ensstr//'_ini.nc', &
+                      titleState, rdate, 1, writestep_state, 1, id_var)
               end if
            end do
         end if
@@ -361,4 +362,4 @@ real :: rdate
 
   firsttime = .false.
 
-end subroutine prepoststep_ens_pdaf
+end subroutine prepoststep_pdaf

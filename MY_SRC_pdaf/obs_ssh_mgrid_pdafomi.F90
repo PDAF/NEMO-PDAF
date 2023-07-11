@@ -93,15 +93,15 @@ CONTAINS
       USE pdafomi, &
          ONLY: PDAFomi_gather_obs
       USE assimilation_pdaf, &
-         ONLY: filtertype, delt_obs
-      USE nemo_pdaf, &
-         ONLY: ni_p, nj_p
+         ONLY: filtertype, delt_obs, use_global_obs
+      use statevector_pdaf, &
+           only: id, sfields
       USE parallel_pdaf, &
          ONLY: COMM_filter
-      USE par_oce, &
-         ONLY: jpiglo, jpjglo
-      USE dom_oce, &
-         ONLY: glamt, gphit, nimpp, njmpp, ndastp
+      use io_pdaf, &
+           only: check
+      USE nemo_pdaf, &
+         ONLY: ni_p, nj_p, jpiglo, jpjglo, glamt, gphit, nimpp, njmpp, ndastp
 
       INTEGER, INTENT(in)    :: step    !< Current time step
       INTEGER, INTENT(inout) :: dim_obs !< Dimension of full observation vector
@@ -155,7 +155,7 @@ CONTAINS
       thisobs%ncoord = 2
 
       ! SEt to use limited full observations
-      thisobs%use_global_obs = 0
+      thisobs%use_global_obs = use_global_obs
 
       ! **********************************
       ! *** Read PE-local observations ***
@@ -168,36 +168,24 @@ CONTAINS
          WRITE (*, '(a,4x,a,a)') 'NEMO-PDAF', '--- name of SSH file variable: ', TRIM(varname_ssh_mgrid)
       END IF
 
-      s = 1
-      stat(s) = NF90_OPEN(file_ssh_mgrid, NF90_NOWRITE, ncid_in)
-      s = s + 1
+      call check( nf90_open(file_ssh_mgrid, NF90_NOWRITE, ncid_in) )
 
-      stat(s) = NF90_INQ_VARID(ncid_in, TRIM(varname_ssh_mgrid), id_var)
-      s = s + 1
+      call check( nf90_inq_varid(ncid_in, TRIM(varname_ssh_mgrid), id_var) )
 
       ALLOCATE (obs(jpiglo, jpjglo, 1))
       ! Increment time in NetCDF file so correct obs read
       nc_step = nc_step + delt_obs
 
-      nc_step = 1
+      nc_step = 40
 IF (mype_filter == 0) write (*,*) 'NEMO-PDAF:    Warning: reading step ', nc_step, 'is hard-coded'
+
       pos = (/1, 1, nc_step/)
       cnt = (/jpiglo, jpjglo, 1/)
 
-      stat(s) = NF90_GET_VAR(ncid_in, id_var, obs, start=pos, count=cnt)
-      s = s + 1
+      call check( nf90_get_var(ncid_in, id_var, obs, start=pos, count=cnt) )
 
-      stat(s) = NF90_CLOSE(ncid_in)
-      s = s + 1
+      call check( nf90_close(ncid_in) )
 
-      DO j = 1, s - 1
-         IF (stat(j) .NE. NF90_NOERR) THEN
-            WRITE (*, '(/9x, a, 3x, a, 3x, a, i2)') &
-               'NetCDF error in reading obs file:', file_ssh_mgrid, &
-               'status array, j=', j
-            CALL abort_parallel()
-         END IF
-      END DO
 
       ! ***********************************************************
       ! *** Count available observations for the process domain ***
@@ -249,7 +237,7 @@ IF (mype_filter == 0) write (*,*) 'NEMO-PDAF:    Warning: reading step ', nc_ste
                ocoord_p(2, cnt_p) = gphit(i + i0, j + j0)*rad_conv
 
                ! Coordinates for observation operator (gridpoint)
-               thisobs%id_obs_p(1, cnt_p) = cnt0_p
+               thisobs%id_obs_p(1, cnt_p) = cnt0_p + sfields(id%ssh)%off
             END DO
          END DO
       ELSE

@@ -50,6 +50,7 @@ subroutine init_ens_pdaf(filtertype, dim_p, dim_ens, state_p, Uinv, &
   real(pwp) :: ens_mean             ! Ensemble mean value
   real(pwp) :: inv_dim_ens          ! Inverse ensemble size
   integer :: verbose                ! Control verbosity
+  logical :: zeromean=.true.        ! Whether to set ensemble mean to zero
 
 
 ! ************************************
@@ -74,8 +75,12 @@ subroutine init_ens_pdaf(filtertype, dim_p, dim_ens, state_p, Uinv, &
      ! Read ensemble states as model snapshots from separate files
 
      if (mype_filter==0) write (*,'(a,1x,a)') 'NEMO-PDAF', 'Initialize ensemble from list of output files'
-
-      call read_ens_mv_filelist(1.0, .true., path_ens, dim_p, dim_ens, ens_p)
+     if (type_central_state > 0) then
+        zeromean = .true.
+     else
+        zeromean = .false.
+     end if
+     call read_ens_mv_filelist(1.0, zeromean, path_ens, dim_p, dim_ens, ens_p)
 
   elseif (type_ens_init == 3) then
      
@@ -109,14 +114,14 @@ subroutine init_ens_pdaf(filtertype, dim_p, dim_ens, state_p, Uinv, &
      if (mype_filter==0) write (*,'(a,1x,a)') 'NEMO-PDAF', 'Read central model state of ensemble from file'
 
      call read_state_mv(path_inistate, dim_p, 1, coupling_nemo, state_p)
-
+#ifndef PDAF_OFFLINE
   elseif (type_central_state == 2) then
 
      ! Obtain central state from model task 1 (set by model initialization)
      if (mype_filter==0) write (*,'(a,1x,a)') 'NEMO-PDAF', 'Collect central ensemble state from model'
 
      call collect_state_init_pdaf(dim_p, state_p)
-
+#endif
   end if
 
 

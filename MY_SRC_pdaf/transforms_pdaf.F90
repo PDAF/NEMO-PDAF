@@ -839,9 +839,7 @@ contains
        do k = 1, n_levels
           do j = 1, nj_p
              do i = 1, ni_p
-!                if (tmask(i + i0, j + j0, k) == 1.0_pwp) then
-                   field(i,j,k) = state(cnt) !convert to NEMO format (ntimec,nlvls,nlats,nlons)
-!                end if
+                field(i,j,k) = state(cnt) !convert to NEMO format (ntimec,nlvls,nlats,nlons)
                 cnt = cnt + 1
              enddo
           enddo
@@ -879,9 +877,7 @@ contains
        cnt = 1 + offset
        do j = 1, nj_p
           do i = 1, ni_p
-!             if (tmask(i + i0, j + j0, k) == 1.0_pwp) then
                 field(i,j) = state(cnt) !convert to NEMO format (ntimec,nlvls,nlats,nlons)
-!             end if
              cnt = cnt + 1
           enddo
        enddo

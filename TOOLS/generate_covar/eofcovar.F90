@@ -15,7 +15,7 @@ subroutine eofcovar()
   use mod_memcount_pdaf, & ! Memory counting
        only: memcount
   use parallel_pdaf, &     ! Parallelization
-       only: mype_world, abort_parallel
+       only: mype_world, abort_parallel, n_modeltasks
   use assimilation_pdaf, & ! Variables for assimilation
        only: dim_ens, dim_state_p, type_ens_init
   use statevector_pdaf, &  ! State vector definitions
@@ -64,6 +64,9 @@ subroutine eofcovar()
      write (*,'(10x,a/)') '*******************************************'
   end if
 
+  ! Set ensemble size
+  dim_ens = n_modeltasks
+
   do_mv = 0
   subtract_mean = 0
   running_mean = 1
@@ -71,7 +74,7 @@ subroutine eofcovar()
   hwindow = 5
 
   ! Read configuration
-  open(unit=20, file='pdaf.nml')
+  open(unit=20, file='pdaf_eofcovar.nml')
   read(unit=20, nml=generate_covar)
   rewind(20)
   close(20)
@@ -119,7 +122,7 @@ subroutine eofcovar()
    if (running_mean == 1) then
 
       write (*,'(1x,a,i5,a)') 'Compute running mean over', maxtimes,' snapshots'
-      write (*,'(1x,a,i5)') '-- use half-window sizze', hwindow
+      write (*,'(1x,a,i5)') '-- use half-window size', hwindow
 
       call compute_running_mean(maxtimes, hwindow, states, meanstate, tmp_ens)
 
@@ -155,7 +158,6 @@ subroutine eofcovar()
    allocate(svals(maxtimes))
    allocate(stddev(n_fields))
    call memcount(4,'r',maxtimes + n_fields)
-
 
    ! Call routine generating matrix decomposition
    call PDAF_eofcovar(dim_state_p, maxtimes, n_fields, sfields(:)%dim, sfields(:)%off, &

@@ -61,6 +61,7 @@ module nemo_pdaf
   logical :: lwp = .true.
   integer :: numout = 6
   integer :: jptra = 0
+  integer :: ndastp = 1
 
 #if defined key_top
   type tracer
@@ -94,6 +95,8 @@ module nemo_pdaf
   integer :: ni_p, nj_p, nk_p               ! Size of decomposed grid
   integer :: istart, jstart                 ! Start indices for internal local domain
   integer :: dim_2d_p, dim_3d_p             ! Dimension of 2d/3d grid box of sub-domain
+  integer :: type_limcoords = 0             ! How limiting domain coords are determined
+       ! 0: from glamt/gphit; 1: from min/max of lat1_p and lon1_p
   real(pwp), allocatable :: lat1_p(:), lon1_p(:) ! Vectors holding latitude and latitude for decomposition
   real(pwp), allocatable :: lats(:,:), lons(:,:) ! Arrays for interior coordinates (no halo)
   integer :: sdim2d, sdim3d                 ! 2D/3D dimension of field in state vector
@@ -115,20 +118,24 @@ contains
   !! In particular index information is initialize to map in between
   !! the model grid and the state vector
   !!
-  subroutine set_nemo_grid()
+  subroutine set_nemo_grid(screen)
 
     use mod_kind_pdaf
-    use assimilation_pdaf, &
-         only: screen
     use parallel_pdaf, &
-         only: mype_model, npes_model, task_id
+         only: mype_model, npes_model, task_id, comm_model, &
+         MPI_INT, MPI_SUM, MPIerr
     use PDAFomi, &
          only: PDAFomi_set_domain_limits
 
     implicit none
 
+! *** Argument ***
+    integer, intent(in) :: screen         ! Control verbosity
+
+! *** Local variables ***
     integer :: i, j, k                    ! Counters
     integer :: cnt, cnt_all, cnt_layers   ! Counters
+    integer :: nwet_g, nwet3d_g           ! Global sums of wet grid point
     real(pwp) :: lim_coords(2,2)          ! Limiting coordinates of sub-domain
 
 ! *** set dimension of 2d and 3d fields in state vector ***
@@ -150,13 +157,14 @@ contains
     istart = nimpp+nldi-1
     jstart = njmpp+nldj-1
 
+#ifndef PDAF_OFFLINE
     ! Set coordinate vectors for rectangular grids
     allocate(lat1_p(nj_p), lon1_p(ni_p))
 
     lat1_p(:) = 0.0
     do j = 1, nj_p
        do i = 1, ni_p
-          if (gphit(i+i0, j+j0) > 0.00001) then
+          if (abs(gphit(i+i0, j+j0)) > 0.00001) then
              lat1_p(j) = gphit(i+i0, j+j0)
           endif
        enddo
@@ -170,6 +178,7 @@ contains
           endif
        enddo
     enddo
+#endif
 
     ! Store interior coordinates
     allocate(lons(ni_p, nj_p), lats(ni_p, nj_p))
@@ -294,14 +303,32 @@ contains
        write(*,'(a,5x,a,8x,i11)') 'NEMO-PDAF', 'Number of 3D wet points', nwet3d
        write(*,'(a,5x,a,8x,i11)') 'NEMO-PDAF', '2D wet points * nlayers', nwet*nk_p
     else 
-       if (screen>1) then
+       if (screen==1 .or. screen==2) then
+
+          if (task_id==1) then
+             ! Get global sums
+             call MPI_Reduce (nwet, nwet_g, 1, MPI_INT, MPI_SUM, &
+                  0, COMM_model, MPIerr)
+             call MPI_Reduce (nwet3d, nwet3d_g, 1, MPI_INT, MPI_SUM, &
+                  0, COMM_model, MPIerr)
+
+             if (mype_model==0) then
+                write(*,'(a,5x,a,3x,i11)') &
+                     'NEMO-PDAF', 'Number of global wet surface points', nwet_g
+                write(*,'(a,5x,a,8x,i11)') &
+                     'NEMO-PDAF', 'Number of global 3D wet points', nwet3d_g
+                write(*,'(a,5x,a,8x,i11)') &
+                     'NEMO-PDAF', 'global 2D wet points * nlayers', nwet_g*nk_p
+             end if
+          end if
+       elseif (screen>2) then
           write(*,'(a,2x,a,1x,i4,2x,a,3x,i11)') &
                'NEMO-PDAF', 'PE', mype_model, 'Number of wet surface points', nwet
           write(*,'(a,2x,a,1x,i4,2x,a,8x,i11)') &
                'NEMO-PDAF', 'PE', mype_model, 'Number of 3D wet points', nwet3d
           write(*,'(a,2x,a,1x,i4,2x,a,8x,i11)') &
                'NEMO-PDAF', 'PE', mype_model, '2D wet points * nlayers', nwet*nk_p
-     end if
+       end if
     end if
 
 
@@ -309,13 +336,45 @@ contains
 ! *** Specify domain limits to limit observations to sub-domains ***
 ! ******************************************************************
 
-    lim_coords(1,1) = glamt(i0 + 1, j0 + 1) * deg2rad
-    lim_coords(1,2) = glamt(i0 + ni_p, j0 + 1) * deg2rad
-    lim_coords(2,1) = gphit(i0 + ni_p, j0 + nj_p) * deg2rad
-    lim_coords(2,2) = gphit(i0 + 1, j0 + 1) * deg2rad
+    if (type_limcoords==0) then
+       lim_coords(1,1) = glamt(i0 + 1, j0 + 1) * deg2rad
+       lim_coords(1,2) = glamt(i0 + ni_p, j0 + 1) * deg2rad
+       lim_coords(2,1) = gphit(i0 + ni_p, j0 + nj_p) * deg2rad
+       lim_coords(2,2) = gphit(i0 + 1, j0 + 1) * deg2rad
+    elseif (type_limcoords==1) then
+       lim_coords(1,1) = minval(lon1_p) * deg2rad
+       lim_coords(1,2) = maxval(lon1_p) * deg2rad
+       lim_coords(2,1) = maxval(lat1_p) * deg2rad
+       lim_coords(2,2) = minval(lat1_p) * deg2rad
+    else
+       lim_coords(1,1) = minval(glamt(:, :)) * deg2rad
+       lim_coords(1,2) = maxval(glamt(:, :)) * deg2rad
+       lim_coords(2,1) = maxval(gphit(:, :)) * deg2rad
+       lim_coords(2,2) = minval(gphit(:, :)) * deg2rad
+    end if
 
     call PDAFomi_set_domain_limits(lim_coords)
 
   end subroutine set_nemo_grid
+
+
+#ifdef PDAF_OFFLINE
+!> Return date as real from step value
+!!
+!! This routine mimicks what NEMO's routine calc_date would
+!! return. However, here we assume that 'step' is just an integer
+!! containing the date
+!! 
+  subroutine calc_date(step, rdate)
+
+    implicit none
+
+    integer, intent(in)    :: step
+    real(pwp), intent(out) :: rdate
+
+    rdate = REAL(step+1, pwp)
+ 
+  end subroutine calc_date
+#endif
 
 end module nemo_pdaf

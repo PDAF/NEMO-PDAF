@@ -1,5 +1,5 @@
 &ensemble_nml
-  dim_ens=_DIMENS_
+  dim_ens=30
   screen=0
 /
 
@@ -12,12 +12,13 @@
 /
 
 &io_nml
-  verbose_io=2
+  verbose_io=1
   save_var = 'both'
   save_state = 'both'
   file_covar = '../generate_covar/covar_test.nc'
   path_ens = '../ORCA2_nobio'
   path_inistate = '../ORCA2_nobio'
+  file_out_incr = 'increment'
 /
 
 &update_nml
@@ -29,12 +30,13 @@
   do_asmiau = .true.
   steps_asmiau = 10
   shape_asmiau = 0
+!  iter_divdmp = 5
 /
 
 &init_nml
-  ens_restart = _RESTART_    ! Ensemble restarting
-  type_ens_init = 0          ! 3: covariance matrix (if ens_restart=.false.)
-  type_central_state = 2
+  ens_restart = .false.    ! Ensemble restarting
+  type_ens_init = 0         ! 3: covariance matrix (if ens_restart=.false.)
+  type_central_state = 1
   ensscale = 1.0
 /
 
@@ -54,6 +56,11 @@
   sfields(3)%file = 'ORCA2_5d_00010101_00011231_grid_T.nc'
   sfields(4)%file = 'ORCA2_5d_00010101_00011231_grid_U.nc'
   sfields(5)%file = 'ORCA2_5d_00010101_00011231_grid_V.nc'
+  sfields(1)%file_state = 'ORCA2_5d_00010101_00011231_grid_T.nc'
+  sfields(2)%file_state = 'ORCA2_5d_00010101_00011231_grid_T.nc'
+  sfields(3)%file_state = 'ORCA2_5d_00010101_00011231_grid_T.nc'
+  sfields(4)%file_state = 'ORCA2_5d_00010101_00011231_grid_U.nc'
+  sfields(5)%file_state = 'ORCA2_5d_00010101_00011231_grid_V.nc'
 /
 
 ! OBSERVATIONS
@@ -71,7 +78,7 @@
 ! Settings for regional CMEMS SST
 !  assim_sst_cmems = .true.
   path_sst_cmems = '../observations/SST_2015'
-  file_sst_cmems = 'sst_REP_L4_2015_MONTH_.nc'
+  file_sst_cmems = 'sst_REP_L4_201501.nc'
   varname_sst_cmems = 'analysed_sst'
   mode_sst_cmems = 0     ! 0 for linear interpolation onto observation grid
   dist_sst_cmems = 'geo' ! 'geo' for geographic in km; 'gp' for grid point distance

@@ -1,10 +1,10 @@
-MODULE mod_kind_pdaf
-
 !> Define real precision
 !!
 !! This module defines the kind of real and length of character strings
 !! for the PDAF call-back routines and interfaces. It is based on the NEMO
 !! module `par_kind.F90`.
+!!
+MODULE mod_kind_pdaf
 
   IMPLICIT NONE
   SAVE

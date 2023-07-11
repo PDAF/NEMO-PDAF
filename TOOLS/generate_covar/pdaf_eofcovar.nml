@@ -1,0 +1,8 @@
+! Namelist to generate covariance matrix
+&generate_covar
+ hwindow = 5            ! Half window size to compute running mean (2*hwindow+1 snapshots are used)
+ type_ens_init = 0      ! How are snapshots read: (0) single file; (2) multiple files with 1 snapshot each
+ path_ens = '../ORCA2_PISCES'    ! Directory for snapshot files
+ path_covar = '.'                ! Directory to which covariance matrix file is written
+ file_covar = 'covar_test.nc'    ! Name of covariance matrix file
+/

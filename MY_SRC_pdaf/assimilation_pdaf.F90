@@ -48,6 +48,7 @@ module assimilation_pdaf
 ! Settings for observations - available as command line options
   integer :: delt_obs         !< time step interval between assimilation steps
   logical :: twin_experiment  !< Whether to run an twin experiment with synthetic observations
+  integer :: use_global_obs = 1  !< (1) use global obs.; (0) use domain-reduced full obs.
 
 ! General control of PDAF - available as command line options
   integer :: screen       !< Control verbosity of PDAF
@@ -208,7 +209,7 @@ contains
   subroutine assimilate_pdaf(kt)
 
     use pdaf_interfaces_module, &
-         only: PDAFomi_assimilate_local, PDAF_get_localfilter
+         only: PDAFomi_assimilate_local, PDAFomi_assimilate_global, PDAF_get_localfilter
     use parallel_pdaf, &
          only: mype_ens, abort_parallel, COMM_ensemble, MPIerr
     use nemo_pdaf, &
@@ -234,7 +235,7 @@ contains
     external :: collect_state_pdaf, &  ! Collect a state vector from model fields
          distribute_state_pdaf, &      ! Distribute a state vector to model fields
          next_observation_pdaf, &      ! Provide time step of next observation
-         prepoststep_ens_pdaf          ! User supplied pre/poststep routine
+         prepoststep_pdaf              ! User supplied pre/poststep routine
 
     ! Localization of state vector
     external :: init_n_domains_pdaf, & ! Provide number of local analysis domains
@@ -259,14 +260,14 @@ contains
     if (localfilter == 1) then
        call PDAFomi_assimilate_local(collect_state_pdaf, &
             distribute_state_pdaf, init_dim_obs_pdafomi, obs_op_pdafomi, &
-            prepoststep_ens_pdaf, init_n_domains_pdaf, init_dim_l_pdaf, &
+            prepoststep_pdaf, init_n_domains_pdaf, init_dim_l_pdaf, &
             init_dim_obs_l_pdafomi, g2l_state_pdaf, l2g_state_pdaf, &
             next_observation_pdaf, status_pdaf)
     elseif (localfilter == 0) then
        ! All global filters, except LEnKF
        call PDAFomi_assimilate_global(collect_state_pdaf, &
             distribute_state_pdaf, init_dim_obs_pdafomi, obs_op_pdafomi, &
-            prepoststep_ens_pdaf, &
+            prepoststep_pdaf, &
             next_observation_pdaf, status_pdaf)
     end if
 
