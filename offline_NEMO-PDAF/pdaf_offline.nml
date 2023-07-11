@@ -1,0 +1,13 @@
+! Namelist file for PDAF configuration
+
+&pdaf_offline
+! Path and file for reading model dimensions
+path_dims='../out_free'
+file_dims='NORDIC_1d_grid_T_20150101-20150101.nc'
+varname='votemper'
+use_wet_state = 2
+read_decomp=.false.
+ndastp=20150101
+incrTime = 20150102.0
+coupling_nemo='ieoi'   ! 'incr' to write ensemble of increments; 'ieoi' for EnOI with increment file for mean state
+/
