@@ -171,7 +171,7 @@ contains
 
 #if defined key_top
     if (ln_bgciau) then
-       allocate(iauweight(steps_bgciau))
+       allocate(bgciauweight(steps_bgciau))
        call init_iauweight(bgciauweight, steps_bgciau, shape_bgciau)
     end if
 #endif
@@ -319,16 +319,16 @@ contains
     nitdin       = next_inc                           ! Time step of the background state for direct initialization
     nitdin_r     = nitdin    + nit000 - 1             ! Background time for DI referenced to nit000
     nitiaustr   = next_inc                            ! Timestep of start of IAU interval
-    nitiaufin   = next_inc+steps_asmiau - 1           ! Timestep of end of IAU interval
+    nitiaufin   = nitiaustr+steps_asmiau - 1          ! Timestep of end of IAU interval
     nitiaustr_r = nitiaustr + nit000 - 1              ! Start of IAU interval referenced to nit000
     nitiaufin_r = nitiaufin + nit000 - 1              ! End of IAU interval referenced to nit000
 
     if (mype_ens==0) then
        if (ln_trainc .or. ln_dyninc .or. ln_sshinc) then
           if (ln_asmiau) then
-             write (*,'(a,5x,a,2i)') 'NEMO-PDAF', '--- set IAU steps for ASMINC: ', nitiaustr_r, nitiaufin_r
+             write (*,'(a,5x,a,2i7)') 'NEMO-PDAF', '--- set IAU steps for ASMINC: ', nitiaustr_r, nitiaufin_r
           else
-             write (*,'(a,5x,a,i)') 'NEMO-PDAF', '--- set DIN step for ASMINC: ', nitdin_r
+             write (*,'(a,5x,a,i7)') 'NEMO-PDAF', '--- set DIN step for ASMINC: ', nitdin_r
           end if
        end if
     end if
@@ -338,11 +338,11 @@ contains
 
        if (allocated(wgtiau)) then
           if (mype_ens==0) &
-               write (*,'(a,5x,a,2i)') 'NEMO-PDAF', '--- update IAU weight array'
+               write (*,'(a,5x,a,2i7)') 'NEMO-PDAF', '--- update IAU weight array'
 
           cnt = 1
           wgtiau(:) = 0.0
-          do i = nitiaustr_r, nitiaufin_r
+          do i = nitiaustr, nitiaufin
              wgtiau(i) = iauweight(cnt)
              cnt = cnt + 1
           end do
@@ -358,16 +358,16 @@ contains
     nitdinbgc    = next_inc                           ! Time step of direct init for BGC
     nitdinbgc_r  = nitdinbgc    + nit000 - 1          ! Background time for DI referenced to nit000
     nitibgcstr   = next_inc                           ! Timestep of start of BGC IAU interval
-    nitibgcfin   = next_inc+steps_bgciau - 1          ! Timestep of end of BGC IAU interval
+    nitibgcfin   = nitibgcstr+steps_bgciau - 1        ! Timestep of end of BGC IAU interval
     nitibgcstr_r = nitibgcstr + nit000 - 1            ! Start of BGC IAU interval referenced to nit000
     nitibgcfin_r = nitibgcfin + nit000 - 1            ! End of BGC IAU interval referenced to nit000
 
     if (mype_ens==0) then
        if (ln_trcinc) then
           if (ln_bgciau) then
-             write (*,'(a,5x,a,2i)') 'NEMO-PDAF', '--- set BGC IAU steps for ASMINC: ', nitibgcstr_r, nitibgcfin_r
+             write (*,'(a,5x,a,2i7)') 'NEMO-PDAF', '--- set BGC IAU steps for ASMINC: ', nitibgcstr_r, nitibgcfin_r
           else
-             write (*,'(a,5x,a,i)') 'NEMO-PDAF', '--- set BGC DIN step for ASMINC: ', nitdinbgc_r
+             write (*,'(a,5x,a,i7)') 'NEMO-PDAF', '--- set BGC DIN step for ASMINC: ', nitdinbgc_r
           end if
        end if
     end if
@@ -377,11 +377,11 @@ contains
 
        if (allocated(wgtiaubgc)) then
           if (mype_ens==0) &
-               write (*,'(a,5x,a,2i)') 'NEMO-PDAF', '--- update BGC IAU weight array'
+               write (*,'(a,5x,a,2i7)') 'NEMO-PDAF', '--- update BGC IAU weight array'
 
           cnt = 1
           wgtiaubgc(:) = 0.0
-          do i = nitibgcstr_r, nitibgcfin_r
+          do i = nitibgcstr, nitibgcfin
              wgtiaubgc(i) = bgciauweight(cnt)
              cnt = cnt + 1
           end do
@@ -625,7 +625,7 @@ contains
     divdmp: if ( ln_dyninc .and. nn_divdmp > 0 ) then    ! Apply divergence damping filter
 
        if (mype_ens==0) &
-            write (*,'(a,4x,a,i)') 'NEMO-PDAF', '--- apply divergence damping: nn_divdmp', nn_divdmp
+            write (*,'(a,4x,a,i4)') 'NEMO-PDAF', '--- apply divergence damping: nn_divdmp', nn_divdmp
 
        allocate( zhdiv(jpi,jpj) ) 
 

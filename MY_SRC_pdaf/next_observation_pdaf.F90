@@ -45,7 +45,7 @@ subroutine next_observation_pdaf(stepnow, nsteps, doexit, time)
   time = 0.0
   doexit = 0
 
-  if (stepnow + delt_obs <= nitend) then
+  if (stepnow + delt_obs + nit000 - 1 <= nitend) then
      ! *** During the assimilation process ***
 
      ! The time step settings here account for the fact that for
@@ -59,7 +59,7 @@ subroutine next_observation_pdaf(stepnow, nsteps, doexit, time)
      ! before the time stepping and not to perform an analysis
      ! step at the very end.
      
-     if (stepnow == nit000 - 1) then
+     if (stepnow == 0) then
         ! First analysis step 
 
         ! Apply IAU
@@ -86,7 +86,7 @@ subroutine next_observation_pdaf(stepnow, nsteps, doexit, time)
           'NEMO-PDAF', stepnow, 'Next observation at time step', stepnow + nsteps
 
      ! Update analysis step information for NEMO-ASM
-     if (stepnow == nit000 - 1) then
+     if (stepnow == 0) then
         ! At initial time - apply increments after first analysis step
         call store_asm_step_pdaf(stepnow+nsteps, 0)
      else

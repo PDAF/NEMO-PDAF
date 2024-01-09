@@ -188,7 +188,6 @@ module assimilation_pdaf
   integer, allocatable :: id_lstate_in_pstate(:) !< Indices of local state vector in global vector
   real(pwp) :: domain_coords(2)       !< Coordinates of local analysis domain
 
-  integer :: assim_flag = 0   !< Flag whether assimilation step was just done
 
 !$OMP THREADPRIVATE(domain_coords, id_lstate_in_pstate)
 
@@ -223,6 +222,7 @@ contains
 ! *** Local variables ***
     integer :: status_pdaf         ! PDAF status flag
     integer :: localfilter         ! Flag for domain-localized filter (1=true)
+    integer :: assim_flag          ! Flag whether assimilation step was just done
 
     !! External subroutines 
     !!  (subroutine names are passed over to PDAF in the calls to 
@@ -273,6 +273,7 @@ contains
 
 ! *** Query whether analysis step was performed
 ! *** This is also used to trigger the Euler time step for nemo_coupling='odir'
+    assim_flag = 0
     call PDAF_get_assim_flag(assim_flag)
 
     ! Output into NEMO's ocean.output file
@@ -283,8 +284,6 @@ contains
     endif
 
     if (assim_flag==1) call MPI_Barrier(COMM_ensemble, MPIerr)
-
-    if (coupling_nemo/='odir') assim_flag=0
 
     ! Check for errors during execution of PDAF
     if (status_pdaf /= 0) then

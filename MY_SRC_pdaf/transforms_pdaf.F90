@@ -310,7 +310,7 @@ contains
        do k = 1, n_levels
           do j = 1,nj_p
              do i = 1, ni_p
-                if (abs(field(i,j,k,1)- missval) > 0.1_pwp) then 
+                if (abs(field(i,j,k,1)- missval) > 1e-10) then 
                    state(cnt) = field(i,j,k,1)
                 else
                    state(cnt) = 0.0_pwp
@@ -388,7 +388,7 @@ contains
        do k = 1, n_levels
           do j = 1,nj_p
              do i = 1, ni_p
-                if (abs(field(i,j,k)- missval) > 0.1_pwp) then 
+                if (abs(field(i,j,k)- missval) > 1e-10) then 
                    state(cnt) = field(i,j,k)
                 else
                    state(cnt) = 0.0_pwp
@@ -430,7 +430,7 @@ contains
        cnt = 1 + offset
        do j = 1,nj_p
           do i = 1, ni_p
-             if (abs(field(i,j)- missval) > 0.1_pwp) then 
+             if (abs(field(i,j)- missval) > 1e-10) then 
                 state(cnt) = field(i,j)
              else
                 state(cnt) = 0.0_pwp
