@@ -43,7 +43,7 @@ contains
          type_trans, type_sqrt, delt_obs, locweight, type_ens_init, &
          type_central_state, type_hyb, hyb_gamma, hyb_kappa
     use nemo_pdaf, &
-         only: set_nemo_grid, lwp, numout
+         only: set_nemo_grid
     use statevector_pdaf, &
          only: setup_statevector
     use utils_pdaf, &
