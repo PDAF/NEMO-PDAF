@@ -12,6 +12,12 @@ Directories:
 
 **MY_SRC_NEMO4.0.7/** contains the modified NEMO routines for NEMO 4.0.7. This should also be usable for other 4.0.x versions.
 
+**MY_SRC_nemo4.2.2/** contains the modified NEMO routines for NEMO 4.2.2. (This is currently not fully tested)
+
+**MY_SRC_nemo5.0-beta/** contains the modified NEMO routines for NEMO 5.0 beta. (This is in development)
+
+**MY_SRC_pdaf_nemo4.2.2/** contains the PDAF user routines adapted to NEMO 4.2.2 (in development; not fully tested)
+
 **run/** contains 
 - example `arch` file for compiling NEMO with PDAF (arch-linux_mpifort_PDAF.fcm)
 - namelist file (namelist_cfg.pdaf_template)
